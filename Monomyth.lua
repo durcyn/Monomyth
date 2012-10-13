@@ -232,7 +232,6 @@ Monomyth:Register('MAIL_CLOSED', function()
 	atMail = false
 end)
 
-<<<<<<< HEAD
 Monomyth:Register("MERCHANT_SHOW", function() 
 	atVendor = true
 end)
@@ -243,7 +242,8 @@ end)
 
 Monomyth:Register('BAG_UPDATE', function(bag)
 	if (atBank or atMail or atVendor or not MONOMYTH_TOGGLE) then return end
-=======
+end
+
 Monomyth:Register('MERCHANT_SHOW', function()
 	atMerchant = true
 end)
