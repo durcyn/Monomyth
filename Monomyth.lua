@@ -23,6 +23,7 @@ if ldb then
 end
 
 local atBank, atMail, atVendor
+local atBank, atMail, atMerchant
 
 function Monomyth:Register(event, func)
 	self:RegisterEvent(event)
@@ -35,7 +36,7 @@ end
 
 local function IsTrackingTrivial()
 	for index = 1, GetNumTrackingTypes() do
-		local name, __, active = GetTrackingInfo(index)
+		local name, _, active = GetTrackingInfo(index)
 		if(name == MINIMAP_TRACKING_TRIVIAL_QUESTS) then
 			return active
 		end
@@ -46,7 +47,7 @@ Monomyth:Register('QUEST_GREETING', function()
 	local active = GetNumActiveQuests()
 	if(active > 0) then
 		for index = 1, active do
-			local __, complete = GetActiveTitle(index)
+			local _, complete = GetActiveTitle(index)
 			if(complete) then
 				SelectActiveQuest(index)
 			end
@@ -105,9 +106,9 @@ Monomyth:Register('GOSSIP_SHOW', function()
 		end
 	end
 
-	local __, instance = GetInstanceInfo()
+	local _, instance = GetInstanceInfo()
 	if(available == 0 and active == 0 and GetNumGossipOptions() == 1 and instance ~= 'raid') then
-		local __, type = GetGossipOptions()
+		local _, type = GetGossipOptions()
 		if(type == 'gossip') then
 			SelectGossipOption(1)
 			return
@@ -139,6 +140,14 @@ end)
 
 Monomyth:Register('QUEST_ACCEPT_CONFIRM', AcceptQuest)
 
+Monomyth:Register('QUEST_ACCEPTED', function(id)
+	if(not GetCVarBool('autoQuestWatch')) then return end
+
+	if(not IsQuestWatched(id) and GetNumQuestWatches() < MAX_WATCHABLE_QUESTS) then
+		AddQuestWatch(id)
+	end
+end)
+
 Monomyth:Register('QUEST_PROGRESS', function()
 	if(IsQuestCompletable()) then
 		CompleteQuest()
@@ -162,7 +171,7 @@ Monomyth:Register('QUEST_COMPLETE', function()
 		for index = 1, choices do
 			local link = GetQuestItemLink('choice', index)
 			if(link) then
-				local __, __, __, __, __, __, __, __, __, __, value = GetItemInfo(link)
+				local _, _, _, _, _, _, _, _, _, _, value = GetItemInfo(link)
 
 				if(string.match(link, 'item:45724:')) then
 					-- Champion's Purse, contains 10 gold
@@ -223,6 +232,7 @@ Monomyth:Register('MAIL_CLOSED', function()
 	atMail = false
 end)
 
+<<<<<<< HEAD
 Monomyth:Register("MERCHANT_SHOW", function() 
 	atVendor = true
 end)
@@ -233,29 +243,46 @@ end)
 
 Monomyth:Register('BAG_UPDATE', function(bag)
 	if (atBank or atMail or atVendor or not MONOMYTH_TOGGLE) then return end
+=======
+Monomyth:Register('MERCHANT_SHOW', function()
+	atMerchant = true
+end)
 
+Monomyth:Register('MERCHANT_CLOSED', function()
+	atMerchant = false
+end)
+
+local ignoredItems = {
+	-- Inscription weapons
+	[31690] = true, -- Inscribed Tiger Staff
+	[31691] = true, -- Inscribed Crane Staff
+	[31692] = true, -- Inscribed Serpent Staff
+
+	-- Darkmoon Faire artifacts
+	[29443] = true, -- Imbued Crystal
+	[29444] = true, -- Monstrous Egg
+	[29445] = true, -- Mysterious Grimoire
+	[29446] = true, -- Ornate Weapon
+	[29451] = true, -- A Treatise on Strategy
+	[29456] = true, -- Banner of the Fallen
+	[29457] = true, -- Captured Insignia
+	[29458] = true, -- Fallen Adventurer's Journal
+	[29464] = true, -- Soothsayer's Runes
+}
+
+Monomyth:Register('BAG_UPDATE', function(bag)
+	if(atBank or atMail or atMerchant) then return end
 	for slot = 1, GetContainerNumSlots(bag) do
-		local __, id, active = GetContainerItemQuestInfo(bag, slot)
-		if(id and not active and not IsQuestFlaggedCompleted(id)) then
+		local _, id, active = GetContainerItemQuestInfo(bag, slot)
+		if(id and not active and not IsQuestFlaggedCompleted(id) and not ignoredItems[id]) then
 			UseContainerItem(bag, slot)
 		end
 	end
 end)
 
 ChatFrame_AddMessageEventFilter('CHAT_MSG_SYSTEM', function(self, event, message)
-	if(message == ERR_QUEST_ALREADY_DONE) then
+	if(message == ERR_QUEST_ALREADY_DONE or message == ERR_QUEST_FAILED_LOW_LEVEL) then
 		return true
-	end
-end)
-
-hooksecurefunc('QuestLogTitleButton_OnClick', function(self)
-	if(self.isHeader) then return end
-	QuestLog_SetSelection(self:GetID())
-
-	if(IsControlKeyDown()) then
-		AbandonQuest()
-	elseif(IsAltKeyDown() and GetQuestLogPushable()) then
-		QuestLogPushQuest()
 	end
 end)
 
