@@ -27,7 +27,7 @@ local atBank, atMail, atVendor
 function Monomyth:Register(event, func)
 	self:RegisterEvent(event)
 	self[event] = function(...)
-		if(not IsShiftKeyDown()) then
+		if((not IsShiftKeyDown()) and MONOMYTH_TOGGLE) then
 			func(...)
 		end
 	end
@@ -223,11 +223,11 @@ Monomyth:Register('MAIL_CLOSED', function()
 	atMail = false
 end)
 
-Monomyth:RegisterEvent("MERCHANT_SHOW", function() 
+Monomyth:Register("MERCHANT_SHOW", function() 
 	atVendor = true
 end)
 
-Monomyth:RegisterEvent("MERCHANT_CLOSED", function()
+Monomyth:Register("MERCHANT_CLOSED", function()
 	atVendor = false
 end)
 
