@@ -3,5 +3,8 @@
 ## Version: @project-version@
 ## Title: Monomyth
 ## Notes: Questing enhancements
+## SavedVariables = MONOMYTH_TOGGLE
 
+LibStub.lua
+LibDataBroker-1.1.lua
 Monomyth.lua

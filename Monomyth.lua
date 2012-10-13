@@ -1,7 +1,28 @@
 local Monomyth = CreateFrame('Frame')
 Monomyth:SetScript('OnEvent', function(self, event, ...) self[event](...) end)
+MONOMYTH_TOGGLE = MONOMYTH_TOGGLE or true
 
-local atBank, atMail
+local ldb = LibStub("LibDataBroker-1.1", true)
+if ldb then
+	local broker = LibStub("LibDataBroker-1.1"):NewDataObject("Monomyth", {
+		icon = "Interface\\AddOns\\Monomyth\\active.tga",
+		type = "data source",
+		label = "Monomyth",
+		text = "On",
+	})
+	function broker.OnClick()
+		MONOMYTH_TOGGLE = not MONOMYTH_TOGGLE
+		if not MONOMYTH_TOGGLE then
+			broker.icon = "Interface\\AddOns\\Monomyth\\inactive.tga"
+			broker.text = "Off"
+		else
+			broker.icon = "Interface\\AddOns\\Monomyth\\active.tga"
+			broker.text = "On"
+		end
+	end
+end
+
+local atBank, atMail, atVendor
 
 function Monomyth:Register(event, func)
 	self:RegisterEvent(event)
@@ -202,8 +223,16 @@ Monomyth:Register('MAIL_CLOSED', function()
 	atMail = false
 end)
 
+Monomyth:RegisterEvent("MERCHANT_SHOW", function() 
+	atVendor = true
+end)
+
+Monomyth:RegisterEvent("MERCHANT_CLOSED", function()
+	atVendor = false
+end)
+
 Monomyth:Register('BAG_UPDATE', function(bag)
-	if(atBank or atMail) then return end
+	if (atBank or atMail or atVendor or not MONOMYTH_TOGGLE) then return end
 
 	for slot = 1, GetContainerNumSlots(bag) do
 		local __, id, active = GetContainerItemQuestInfo(bag, slot)
